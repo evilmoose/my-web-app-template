@@ -6,15 +6,12 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
-import Solutions from './pages/Solutions';
-import Pricing from './pages/Pricing';
-import BlogPost from './pages/BlogPost';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
-import BlogPostEditor from './pages/BlogPostEditor';
-import BlogListing from './pages/BlogListing';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
+import Blog from './pages/Blog';
+import BlogAdmin from './pages/BlogAdmin';
 import SimpleFooter from './components/SimpleFooter';
 import NormalFooter from './components/NormalFooter';
 
@@ -24,7 +21,7 @@ const AppContent = () => {
   const path = location.pathname;
   
   // Pages that should have normal scrolling and full footer
-  const normalScrollPages = ['/', '/solutions', '/pricing'];
+  const normalScrollPages = ['/', '/solutions', '/pricing', '/blog'];
   const shouldUseNormalScroll = normalScrollPages.includes(path);
   
   return (
@@ -35,16 +32,7 @@ const AppContent = () => {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/blog" element={<BlogListing />} />
-          <Route path="/blog/:id" element={<BlogPost />} />
-          <Route 
-            path="/blog/new" 
-            element={
-              <AdminRoute>
-                <BlogPostEditor />
-              </AdminRoute>
-            } 
-          />
+          <Route path="/blog" element={<Blog />} />
           <Route 
             path="/dashboard" 
             element={
@@ -67,6 +55,14 @@ const AppContent = () => {
               <ProtectedRoute>
                 <Notifications />
               </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/blog-admin" 
+            element={
+              <AdminRoute>
+                <BlogAdmin />
+              </AdminRoute>
             } 
           />
           <Route path="*" element={<NotFound />} />

@@ -26,13 +26,6 @@ const Navbar = () => {
       message: 'We\'ve added new features to improve your experience.',
       time: '1 week ago',
       read: true
-    },
-    {
-      id: 3,
-      title: 'New Blog Post',
-      message: 'Check out our latest blog post on workflow automation.',
-      time: '2 weeks ago',
-      read: false
     }
   ]);
 
@@ -84,6 +77,15 @@ const Navbar = () => {
     );
   };
 
+  // Determine the blog link destination based on user role
+  const getBlogLink = () => {
+    if (isAdmin) {
+      return "/blog-admin";
+    } else {
+      return "/blog";
+    }
+  };
+
   return (
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,22 +106,19 @@ const Navbar = () => {
                   <Link to="/" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
                     Home
                   </Link>
+                  <Link to="/blog" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
+                    Blog
+                  </Link>
                 </>
               ) : (
-                <Link to="/dashboard" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
-                  Dashboard
-                </Link>
-              )}
-              <Link to="/blog" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
-                Blog
-              </Link>
-              {isAdmin && (
-                <Link
-                  to="/blog/new"
-                  className="px-3 py-2 rounded-md text-sm font-medium text-primary"
-                >
-                  New Post
-                </Link>
+                <>
+                  <Link to="/dashboard" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
+                    Dashboard
+                  </Link>
+                  <Link to={getBlogLink()} className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
+                    Blog
+                  </Link>
+                </>
               )}
               {currentUser ? (
                 <>
@@ -334,31 +333,31 @@ const Navbar = () => {
                 >
                   Home
                 </Link>
+                <Link
+                  to="/blog"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blog
+                </Link>
               </>
             ) : (
-              <Link
-                to="/dashboard"
-                className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-            )}
-            <Link
-              to="/blog"
-              className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Blog
-            </Link>
-            {isAdmin && (
-              <Link
-                to="/blog/new"
-                className="block px-3 py-2 rounded-md text-base font-medium text-primary hover:text-primary hover:bg-neutral-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                New Post
-              </Link>
+              <>
+                <Link
+                  to="/dashboard"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to={getBlogLink()}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Blog
+                </Link>
+              </>
             )}
             {currentUser ? (
               <>

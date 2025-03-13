@@ -5,6 +5,7 @@
 .env.production.local
 
 /backend/.venv
+/backend/ignore
 # Ignore Python cache
 __pycache__/
 **/__pycache__/

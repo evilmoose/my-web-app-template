@@ -85,6 +85,19 @@ current_active_user = fastapi_users.current_user(active=True)
 current_superuser = fastapi_users.current_user(active=True, superuser=True)
 
 
+# Optional current user dependency - for endpoints that work with or without authentication
+async def optional_current_user(request: Request):
+    """
+    Get the current user if authenticated, otherwise return None.
+    This is useful for endpoints that can be accessed by both authenticated and unauthenticated users.
+    """
+    try:
+        user = await current_active_user(request)
+        return user
+    except:
+        return None
+
+
 async def is_admin(user: User = Depends(current_active_user)) -> bool:
     if not user.is_superuser:
         raise HTTPException(

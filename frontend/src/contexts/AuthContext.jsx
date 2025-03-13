@@ -9,12 +9,14 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
 
   // Check if user is already logged in on mount
   useEffect(() => {
     const user = getCurrentUser();
     if (user) {
       setCurrentUser(user);
+      setToken(localStorage.getItem('token'));
     }
     setLoading(false);
   }, []);
@@ -44,6 +46,7 @@ export const AuthProvider = ({ children }) => {
       
       // Store token
       localStorage.setItem('token', data.access_token);
+      setToken(data.access_token);
       
       // Fetch user data
       const userResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, {
@@ -117,11 +120,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     clearAuth();
     setCurrentUser(null);
+    setToken(null);
   };
 
   // Get authenticated API headers
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
@@ -133,6 +136,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin: currentUser?.is_superuser,
     loading,
     error,
+    token,
     login,
     signup,
     logout,

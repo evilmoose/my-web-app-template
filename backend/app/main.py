@@ -6,11 +6,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_users import schemas
 from app.core.config import settings
+from threading import Thread
+from app.services.discord import start_discord_bot
 
 # add routers
 from app.api.leads import router as leads_router
 from app.api.users import auth_backend, fastapi_users
-from app.api.blogs import router as blog_router
+from app.api.blog import router as blog_router
 
 
 # Create FastAPI app
@@ -19,6 +21,8 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
+# Run bot in a separate thread so it doesn't block FastAPI
+Thread(target=start_discord_bot, daemon=True).start()
 
 # Configure CORS
 if settings.BACKEND_CORS_ORIGINS:
@@ -88,8 +92,8 @@ app.include_router(
 # Include blog routes
 app.include_router(
     blog_router,
-    prefix=f"{settings.API_V1_STR}/blogs",
-    tags=["blogs"],
+    prefix=f"{settings.API_V1_STR}/blog",
+    tags=["blog"],
 )
 
 # Root endpoint

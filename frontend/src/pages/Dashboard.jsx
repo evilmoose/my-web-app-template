@@ -25,7 +25,7 @@ const Dashboard = () => {
           <div className="bg-neutral-100 p-6 rounded-lg">
             <h3 className="text-lg font-medium text-primary mb-2">My Workflows</h3>
             <p className="text-neutral-600 mb-4">
-              Create and manage your custom workflows.
+              Manage your custom workflow proposals.
             </p>
             <button className="text-accent-blue hover:underline font-medium">
               View Workflows
@@ -33,9 +33,19 @@ const Dashboard = () => {
           </div>
           
           <div className="bg-neutral-100 p-6 rounded-lg">
-            <h3 className="text-lg font-medium text-primary mb-2">Blog Articles</h3>
+            <h3 className="text-lg font-medium text-primary mb-2">Notifications</h3>
             <p className="text-neutral-600 mb-4">
-              Read the latest blog articles and insights.
+              Check your notifications.
+            </p>
+            <Link to="/notifications" className="text-accent-blue hover:underline font-medium">
+              View Notifications
+            </Link>
+          </div>
+          
+          <div className="bg-neutral-100 p-6 rounded-lg">
+            <h3 className="text-lg font-medium text-primary mb-2">Blog</h3>
+            <p className="text-neutral-600 mb-4">
+              Read our latest blog posts.
             </p>
             <Link to="/blog" className="text-accent-blue hover:underline font-medium">
               View Blog
@@ -47,23 +57,13 @@ const Dashboard = () => {
             <p className="text-neutral-600 mb-4">
               Manage your account and preferences.
             </p>
-            <button className="text-accent-blue hover:underline font-medium">
+            <Link to="/profile" className="text-accent-blue hover:underline font-medium">
               View Settings
-            </button>
+            </Link>
           </div>
           
           {isAdmin && (
             <>
-              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-medium text-primary mb-2">Blog Management</h3>
-                <p className="text-neutral-600 mb-4">
-                  Create and edit blog posts.
-                </p>
-                <Link to="/blog/new" className="text-accent-blue hover:underline font-medium">
-                  Create New Post
-                </Link>
-              </div>
-              
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
                 <h3 className="text-lg font-medium text-primary mb-2">User Management</h3>
                 <p className="text-neutral-600 mb-4">
@@ -72,6 +72,16 @@ const Dashboard = () => {
                 <button className="text-accent-blue hover:underline font-medium">
                   View Users
                 </button>
+              </div>
+              
+              <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-medium text-primary mb-2">Blog Management</h3>
+                <p className="text-neutral-600 mb-4">
+                  Create and manage blog posts.
+                </p>
+                <Link to="/blog-admin" className="text-accent-blue hover:underline font-medium">
+                  Manage Blog
+                </Link>
               </div>
               
               <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
