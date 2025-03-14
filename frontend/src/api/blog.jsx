@@ -2,73 +2,120 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-/**
- * Get blog messages from the API
- * @param {string} token - JWT token for authentication
- * @param {number} limit - Maximum number of messages to retrieve
- * @returns {Promise} - Promise with blog messages array
- */
 export const getBlogMessages = async (token, limit = 5) => {
   try {
-    const response = await axios.get(`${API_URL}/blog/messages?limit=${limit}`, {
+    const response = await axios.get(`${API_URL}/blogs/`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
-    
-    // Handle the response based on the new API format
-    const data = response.data;
-    
-    // If there's an error in the response
-    if (data && data.error) {
-      console.error('API returned error:', data.error);
-      return [];
-    }
-    
-    // If the response contains a messages array
-    if (data && data.messages && Array.isArray(data.messages)) {
-      return data.messages;
-    }
-    
-    // If the response is already an array
-    if (Array.isArray(data)) {
-      return data;
-    }
-    
-    // Default case - return empty array
-    console.warn('Unexpected response format:', data);
-    return [];
-    
+    return response.data;
   } catch (error) {
-    console.error('Error fetching blog messages:', error);
-    if (error.response && error.response.status === 401) {
-      console.error('Authentication error - token may be invalid');
-    }
-    return [];
+    console.error('Error fetching blog posts:', error);
+    throw error;
   }
 };
 
-/**
- * Post a new blog message (admin only)
- * @param {string} token - JWT token for authentication
- * @param {string} content - Message content
- * @returns {Promise} - Promise with the posted message
- */
-export const postBlogMessage = async (token, content) => {
+export const postBlogMessage = async (token, title, content) => {
   try {
     const response = await axios.post(
-      `${API_URL}/blog/post`,
-      { content },
+      `${API_URL}/blogs/`,
+      { title, content },
       {
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
-        },
+          'Content-Type': 'application/json'
+        }
       }
     );
     return response.data;
   } catch (error) {
     console.error('Error posting blog message:', error);
+    throw error;
+  }
+};
+
+export const getBlogPost = async (token, postId) => {
+  try {
+    const response = await axios.get(`${API_URL}/blogs/${postId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching blog post ${postId}:`, error);
+    throw error;
+  }
+};
+
+export const updateBlogPost = async (token, postId, title, content) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/blogs/${postId}`,
+      { title, content },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating blog post ${postId}:`, error);
+    throw error;
+  }
+};
+
+export const deleteBlogPost = async (token, postId) => {
+  try {
+    await axios.delete(`${API_URL}/blogs/${postId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error deleting blog post ${postId}:`, error);
+    throw error;
+  }
+};
+
+// Comments API
+export const getComments = async (token, postId) => {
+  try {
+    const response = await axios.get(`${API_URL}/blogs/${postId}/comments`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching comments for post ${postId}:`, error);
+    throw error;
+  }
+};
+
+export const postComment = async (token, postId, content, parentId = null) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/blogs/comments/`,
+      { 
+        post_id: postId, 
+        content, 
+        parent_id: parentId 
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error posting comment:', error);
     throw error;
   }
 }; 

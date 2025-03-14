@@ -4,6 +4,7 @@ import { postBlogMessage, getBlogMessages } from '../api/blog';
 
 const BlogManagement = ({ onPostSuccess }) => {
   const { token } = useAuth();
+  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -12,8 +13,13 @@ const BlogManagement = ({ onPostSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!title.trim()) {
+      setError('Please enter a title');
+      return;
+    }
+    
     if (!content.trim()) {
-      setError('Please enter a message');
+      setError('Please enter content for your blog post');
       return;
     }
     
@@ -21,8 +27,9 @@ const BlogManagement = ({ onPostSuccess }) => {
       setIsSubmitting(true);
       setError(null);
       
-      await postBlogMessage(token, content);
+      await postBlogMessage(token, title, content);
       
+      setTitle('');
       setContent('');
       setSuccessMessage('Blog post published successfully!');
       
@@ -66,8 +73,23 @@ const BlogManagement = ({ onPostSuccess }) => {
       
       <form onSubmit={handleSubmit}>
         <div className="mb-4">
+          <label htmlFor="title" className="block text-sm font-medium text-neutral-700 mb-1">
+            Title
+          </label>
+          <input
+            id="title"
+            type="text"
+            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="Enter blog post title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            disabled={isSubmitting}
+          />
+        </div>
+        
+        <div className="mb-4">
           <label htmlFor="content" className="block text-sm font-medium text-neutral-700 mb-1">
-            Message Content
+            Content
           </label>
           <textarea
             id="content"
@@ -85,7 +107,7 @@ const BlogManagement = ({ onPostSuccess }) => {
           className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Posting...' : 'Post Message'}
+          {isSubmitting ? 'Posting...' : 'Post Blog'}
         </button>
       </form>
     </div>

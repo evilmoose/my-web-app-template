@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/jwt/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/jwt/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.access_token);
       
       // Fetch user data
-      const userResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/users/me`, {
+      const userResponse = await fetch(`${import.meta.env.VITE_API_URL}/users/me`, {
         headers: {
           'Authorization': `Bearer ${data.access_token}`
         }
@@ -84,7 +84,7 @@ export const AuthProvider = ({ children }) => {
       const first_name = nameParts[0];
       const last_name = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
       
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/register`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

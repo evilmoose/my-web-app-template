@@ -12,6 +12,7 @@ import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
 import Blog from './pages/Blog';
 import BlogAdmin from './pages/BlogAdmin';
+import BlogPost from './pages/BlogPost';
 import SimpleFooter from './components/SimpleFooter';
 import NormalFooter from './components/NormalFooter';
 
@@ -22,7 +23,7 @@ const AppContent = () => {
   
   // Pages that should have normal scrolling and full footer
   const normalScrollPages = ['/', '/solutions', '/pricing', '/blog'];
-  const shouldUseNormalScroll = normalScrollPages.includes(path);
+  const shouldUseNormalScroll = normalScrollPages.includes(path) || path.startsWith('/blog/');
   
   return (
     <div className={shouldUseNormalScroll ? "" : "flex flex-col h-screen overflow-hidden"}>
@@ -33,6 +34,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:postId" element={<BlogPost />} />
           <Route 
             path="/dashboard" 
             element={

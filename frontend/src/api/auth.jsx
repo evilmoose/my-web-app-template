@@ -13,7 +13,7 @@ const authService = {
    */
   login: async (email, password) => {
     const response = await axios.post(
-      `/api/v1/auth/jwt/login`,
+      `/auth/jwt/login`,
       new URLSearchParams({
         username: email,
         password: password,
@@ -43,7 +43,7 @@ const authService = {
     const last_name = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
     
     const response = await axios.post(
-      `/api/v1/auth/register`,
+      `/auth/register`,
       {
         email, 
         password,
@@ -71,7 +71,7 @@ const authService = {
    */
   getCurrentUser: async (token) => {
     const response = await axios.get(
-      `/api/v1/users/me`,
+      `/users/me`,
       {
         headers: {
           'Authorization': `Bearer ${token}`
