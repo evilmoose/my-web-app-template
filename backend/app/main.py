@@ -14,6 +14,7 @@ from app.api.leads import router as leads_router
 from app.api.users import auth_backend, fastapi_users
 from app.api.blogs import router as blog_router
 from app.api.upload import router as upload_router
+from app.api.project import router as project_router
 
 
 # Create FastAPI app
@@ -107,6 +108,13 @@ app.include_router(
     upload_router,
     prefix=f"{settings.API_V1_STR}/upload",
     tags=["upload"],
+)
+
+# Include project routes
+app.include_router(
+    project_router,
+    prefix=f"{settings.API_V1_STR}/projects",
+    tags=["projects"],
 )
 
 # Root endpoint
