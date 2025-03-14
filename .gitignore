@@ -6,6 +6,18 @@
 
 /backend/.venv
 /backend/ignore
+
+# Ignore all image files in uploads directories
+/backend/uploads
+/backend/uploads/*.jpg
+/backend/uploads/*.jpeg
+/backend/uploads/*.png
+/backend/uploads/*.gif
+/backend/uploads/*.webp
+/backend/uploads/*.svg
+/backend/uploads/*.bmp
+/backend/uploads/*.ico
+
 # Ignore Python cache
 __pycache__/
 **/__pycache__/
