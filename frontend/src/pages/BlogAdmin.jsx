@@ -9,13 +9,11 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import MDEditor from '@uiw/react-md-editor';
 
-// Sample categories - same as in BlogManagement
+// Sample categories
 const CATEGORIES = [
-  { value: 'culture', label: 'Culture' },
-  { value: 'techno', label: 'Technology' },
-  { value: 'health', label: 'Health' },
-  { value: 'business', label: 'Business' },
-  { value: 'lifestyle', label: 'Lifestyle' },
+  { value: 'automation', label: 'Automation' },
+  { value: 'development', label: 'Development' },
+  { value: 'resource', label: 'Resource' },
 ];
 
 const BlogAdmin = () => {
