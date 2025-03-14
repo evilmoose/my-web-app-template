@@ -12,6 +12,22 @@ from app.api.users import current_active_user, is_admin
 
 router = APIRouter()
 
+# Public endpoints that don't require authentication
+@router.get("/public/", response_model=List[BlogPostResponse])
+async def get_public_blog_posts(db: AsyncSession = Depends(get_db)):
+    """Get all blog posts for public viewing"""
+    result = await db.execute(select(BlogPost).order_by(BlogPost.created_at.desc()))
+    return result.scalars().all()
+
+@router.get("/public/{post_id}", response_model=BlogPostResponse)
+async def get_public_blog_post(post_id: int, db: AsyncSession = Depends(get_db)):
+    """Get a specific blog post for public viewing"""
+    post = await db.get(BlogPost, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    return post
+
+# Authenticated endpoints
 @router.get("/", response_model=List[BlogPostResponse])
 async def get_blog_posts(db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(BlogPost).order_by(BlogPost.created_at.desc()))

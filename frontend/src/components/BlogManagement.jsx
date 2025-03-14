@@ -1,6 +1,10 @@
 import { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { postBlogMessage, uploadImage } from '../api/blog';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
+import MDEditor from '@uiw/react-md-editor';
 
 // Sample categories
 const CATEGORIES = [
@@ -23,6 +27,8 @@ const BlogManagement = ({ onPostSuccess }) => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const fileInputRef = useRef(null);
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [showMarkdownGuide, setShowMarkdownGuide] = useState(false);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -223,15 +229,74 @@ const BlogManagement = ({ onPostSuccess }) => {
           <label htmlFor="content" className="block text-sm font-medium text-neutral-700 mb-1">
             Content
           </label>
-          <textarea
-            id="content"
-            rows="5"
-            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            placeholder="Write your blog post here..."
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            disabled={isSubmitting}
-          />
+          <div data-color-mode="light">
+            <MDEditor
+              value={content}
+              onChange={setContent}
+              preview="edit"
+              height={300}
+              className="w-full"
+            />
+          </div>
+          <p className="mt-1 text-xs text-neutral-500">
+            You can use Markdown formatting for rich text.
+            {showMarkdownGuide ? (
+              <button 
+                type="button" 
+                className="text-accent-blue hover:underline ml-2"
+                onClick={() => setShowMarkdownGuide(false)}
+              >
+                Hide formatting guide
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                className="text-accent-blue hover:underline ml-2"
+                onClick={() => setShowMarkdownGuide(true)}
+              >
+                Show formatting guide
+              </button>
+            )}
+          </p>
+          
+          {showMarkdownGuide && (
+            <div className="mt-2 p-3 border border-neutral-200 rounded-md bg-neutral-50 text-xs">
+              <h3 className="font-medium text-neutral-700 mb-2">Markdown Formatting Guide:</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div>
+                  <p className="font-medium">Headers:</p>
+                  <pre className="bg-white p-1 rounded"># Heading 1</pre>
+                  <pre className="bg-white p-1 rounded">## Heading 2</pre>
+                  <pre className="bg-white p-1 rounded">### Heading 3</pre>
+                </div>
+                <div>
+                  <p className="font-medium">Emphasis:</p>
+                  <pre className="bg-white p-1 rounded">*italic* or _italic_</pre>
+                  <pre className="bg-white p-1 rounded">**bold** or __bold__</pre>
+                  <pre className="bg-white p-1 rounded">~~strikethrough~~</pre>
+                </div>
+                <div>
+                  <p className="font-medium">Lists:</p>
+                  <pre className="bg-white p-1 rounded">- Item 1{"\n"}- Item 2</pre>
+                  <pre className="bg-white p-1 rounded">1. Item 1{"\n"}2. Item 2</pre>
+                </div>
+                <div>
+                  <p className="font-medium">Links & Images:</p>
+                  <pre className="bg-white p-1 rounded">[Link text](https://example.com)</pre>
+                  <pre className="bg-white p-1 rounded">![Alt text](image-url.jpg)</pre>
+                </div>
+                <div>
+                  <p className="font-medium">Blockquotes:</p>
+                  <pre className="bg-white p-1 rounded">{`> This is a quote`}</pre>
+                </div>
+                <div>
+                  <p className="font-medium">Code:</p>
+                  <pre className="bg-white p-1 rounded">`inline code`</pre>
+                  <pre className="bg-white p-1 rounded">```{"\n"}code block{"\n"}```</pre>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
         <button

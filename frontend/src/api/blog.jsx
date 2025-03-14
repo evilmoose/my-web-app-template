@@ -164,4 +164,24 @@ export const postComment = async (token, postId, content, parentId = null) => {
     console.error('Error posting comment:', error);
     throw error;
   }
+};
+
+export const getAllBlogPosts = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/blogs/public/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching public blog posts:', error);
+    throw error;
+  }
+};
+
+export const getBlogPostById = async (postId) => {
+  try {
+    const response = await axios.get(`${API_URL}/blogs/public/${postId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching public blog post ${postId}:`, error);
+    throw error;
+  }
 }; 
