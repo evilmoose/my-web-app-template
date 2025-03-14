@@ -1,9 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getBlogMessages, deleteBlogPost, updateBlogPost } from '../api/blog';
+import { getBlogMessages, deleteBlogPost, updateBlogPost, uploadImage } from '../api/blog';
 import BlogManagement from '../components/BlogManagement';
 import LayoutWithScroll from '../components/LayoutWithScroll';
 import { Link } from 'react-router-dom';
+
+// Sample categories - same as in BlogManagement
+const CATEGORIES = [
+  { value: 'culture', label: 'Culture' },
+  { value: 'techno', label: 'Technology' },
+  { value: 'health', label: 'Health' },
+  { value: 'business', label: 'Business' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+];
 
 const BlogAdmin = () => {
   const { token, isAdmin } = useAuth();
@@ -13,7 +22,13 @@ const BlogAdmin = () => {
   const [editingPost, setEditingPost] = useState(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editImageUrl, setEditImageUrl] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const fetchPosts = async () => {
     try {
@@ -39,12 +54,57 @@ const BlogAdmin = () => {
     setEditingPost(post.id);
     setEditTitle(post.title);
     setEditContent(post.content);
+    setEditCategory(post.category || '');
+    setEditImageUrl(post.image_url || '');
+    setImagePreview(post.image_url || '');
   };
 
   const handleCancelEdit = () => {
     setEditingPost(null);
     setEditTitle('');
     setEditContent('');
+    setEditCategory('');
+    setEditImageUrl('');
+    setImagePreview('');
+    setImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+
+    // Check file size (limit to 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setEditImageUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleUpdatePost = async (postId) => {
@@ -54,21 +114,42 @@ const BlogAdmin = () => {
 
     try {
       setIsSubmitting(true);
-      await updateBlogPost(token, postId, editTitle, editContent);
+      
+      let finalImageUrl = editImageUrl;
+      
+      // Upload new image if selected
+      if (imageFile) {
+        setIsUploading(true);
+        finalImageUrl = await uploadImage(token, imageFile);
+        setIsUploading(false);
+      }
+      
+      await updateBlogPost(
+        token, 
+        postId, 
+        editTitle, 
+        editContent, 
+        finalImageUrl, 
+        editCategory || null
+      );
       
       // Update local state
       setPosts(prev => 
         prev.map(post => 
           post.id === postId 
-            ? { ...post, title: editTitle, content: editContent } 
+            ? { 
+                ...post, 
+                title: editTitle, 
+                content: editContent,
+                image_url: finalImageUrl,
+                category: editCategory || null
+              } 
             : post
         )
       );
       
       // Reset edit state
-      setEditingPost(null);
-      setEditTitle('');
-      setEditContent('');
+      handleCancelEdit();
     } catch (err) {
       console.error('Error updating blog post:', err);
       setError('Failed to update blog post. Please try again.');
@@ -100,6 +181,11 @@ const BlogAdmin = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const getCategoryLabel = (value) => {
+    const category = CATEGORIES.find(cat => cat.value === value);
+    return category ? category.label : value;
   };
 
   if (!isAdmin) {
@@ -163,6 +249,76 @@ const BlogAdmin = () => {
                             onChange={(e) => setEditTitle(e.target.value)}
                           />
                         </div>
+                        
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-neutral-700 mb-1">
+                            Category
+                          </label>
+                          <select
+                            className="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                            value={editCategory}
+                            onChange={(e) => setEditCategory(e.target.value)}
+                          >
+                            <option value="">Select a category</option>
+                            {CATEGORIES.map((cat) => (
+                              <option key={cat.value} value={cat.value}>
+                                {cat.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-neutral-700 mb-1">
+                            Featured Image
+                          </label>
+                          <div className="mt-1 flex items-center">
+                            <input
+                              type="file"
+                              ref={fileInputRef}
+                              accept="image/*"
+                              onChange={handleImageChange}
+                              className="hidden"
+                              disabled={isSubmitting || isUploading}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="px-4 py-2 bg-neutral-100 border border-neutral-300 rounded-md text-sm text-neutral-700 hover:bg-neutral-200 focus:outline-none"
+                              disabled={isSubmitting || isUploading}
+                            >
+                              {isUploading ? 'Uploading...' : 'Choose Image'}
+                            </button>
+                            {(imagePreview || editImageUrl) && (
+                              <button
+                                type="button"
+                                onClick={handleRemoveImage}
+                                className="ml-2 text-red-600 hover:text-red-800"
+                                disabled={isSubmitting || isUploading}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          
+                          {imagePreview && (
+                            <div className="mt-2">
+                              <div className="relative w-full h-48 overflow-hidden rounded-md">
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    console.error("Preview image failed to load");
+                                    e.target.onerror = null;
+                                    e.target.src = "https://via.placeholder.com/800x400?text=Preview+Not+Available";
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="mb-3">
                           <label className="block text-sm font-medium text-neutral-700 mb-1">
                             Content
@@ -177,7 +333,7 @@ const BlogAdmin = () => {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleUpdatePost(post.id)}
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isUploading}
                             className="bg-primary text-white px-3 py-1 rounded-md hover:bg-primary-dark disabled:opacity-50"
                           >
                             {isSubmitting ? 'Saving...' : 'Save Changes'}
@@ -193,11 +349,21 @@ const BlogAdmin = () => {
                     ) : (
                       <div>
                         <div className="flex justify-between items-start mb-2">
-                          <h3 className="text-lg font-medium text-neutral-800">
-                            <Link to={`/blog/${post.id}`} className="hover:text-primary transition-colors">
-                              {post.title}
-                            </Link>
-                          </h3>
+                          <div>
+                            <h3 className="text-lg font-medium text-neutral-800">
+                              <Link to={`/blog/${post.id}`} className="hover:text-primary transition-colors">
+                                {post.title}
+                              </Link>
+                            </h3>
+                            <div className="flex items-center mt-1">
+                              <p className="text-sm text-neutral-500">Posted on {formatDate(post.created_at)}</p>
+                              {post.category && (
+                                <span className="ml-2 px-2 py-1 bg-neutral-100 text-xs rounded-full text-neutral-600">
+                                  {getCategoryLabel(post.category)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                           <div className="flex space-x-2">
                             <button
                               onClick={() => handleEditClick(post)}
@@ -213,14 +379,34 @@ const BlogAdmin = () => {
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-neutral-500 mb-2">Posted on {formatDate(post.created_at)}</p>
-                        <p className="text-neutral-700 whitespace-pre-wrap line-clamp-3">{post.content}</p>
-                        <Link 
-                          to={`/blog/${post.id}`} 
-                          className="text-sm text-accent-blue hover:underline mt-2 inline-block"
-                        >
-                          View Full Post
-                        </Link>
+                        
+                        <div className="flex mt-3">
+                          {post.image_url && (
+                            <div className="mr-4 flex-shrink-0">
+                              <div className="w-24 h-24 rounded-md overflow-hidden">
+                                <img 
+                                  src={post.image_url} 
+                                  alt={post.title}
+                                  className="w-full h-full object-cover" 
+                                  onError={(e) => {
+                                    console.error("Image failed to load:", post.image_url);
+                                    e.target.onerror = null;
+                                    e.target.src = "https://via.placeholder.com/800x400?text=Image+Not+Found";
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <p className="text-neutral-700 whitespace-pre-wrap line-clamp-3">{post.content}</p>
+                            <Link 
+                              to={`/blog/${post.id}`} 
+                              className="text-sm text-accent-blue hover:underline mt-2 inline-block"
+                            >
+                              View Full Post
+                            </Link>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

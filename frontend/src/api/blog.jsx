@@ -16,11 +16,11 @@ export const getBlogMessages = async (token, limit = 5) => {
   }
 };
 
-export const postBlogMessage = async (token, title, content) => {
+export const postBlogMessage = async (token, title, content, imageUrl = null, category = null) => {
   try {
     const response = await axios.post(
       `${API_URL}/blogs/`,
-      { title, content },
+      { title, content, image_url: imageUrl, category },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -49,11 +49,11 @@ export const getBlogPost = async (token, postId) => {
   }
 };
 
-export const updateBlogPost = async (token, postId, title, content) => {
+export const updateBlogPost = async (token, postId, title, content, imageUrl = null, category = null) => {
   try {
     const response = await axios.put(
       `${API_URL}/blogs/${postId}`,
-      { title, content },
+      { title, content, image_url: imageUrl, category },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -65,6 +65,52 @@ export const updateBlogPost = async (token, postId, title, content) => {
   } catch (error) {
     console.error(`Error updating blog post ${postId}:`, error);
     throw error;
+  }
+};
+
+export const uploadImage = async (token, file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axios.post(
+      `${API_URL}/upload/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      }
+    );
+    
+    // Use the full URL provided by the backend if available
+    if (response.data.full_url) {
+      return response.data.full_url;
+    }
+    
+    // Fallback to constructing the URL ourselves
+    const baseUrl = window.location.origin;
+    const imageUrl = response.data.url;
+    
+    // If the URL already starts with http, it's already absolute
+    if (imageUrl.startsWith('http')) {
+      return imageUrl;
+    }
+    
+    // For development environment, use the API_URL
+    if (import.meta.env.DEV) {
+      return `${API_URL}${imageUrl}`;
+    }
+    
+    // For production, construct URL based on the current origin
+    return `${baseUrl}${imageUrl}`;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    
+    // Fallback to placeholder if the upload fails
+    console.log('Using placeholder image as fallback');
+    return `https://via.placeholder.com/800x400?text=${encodeURIComponent(file.name)}`;
   }
 };
 

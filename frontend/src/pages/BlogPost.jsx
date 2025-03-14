@@ -4,6 +4,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { getBlogPost, getComments, postComment } from '../api/blog';
 import LayoutWithScroll from '../components/LayoutWithScroll';
 
+// Sample categories - same as in BlogManagement and BlogAdmin
+const CATEGORIES = [
+  { value: 'culture', label: 'Culture' },
+  { value: 'techno', label: 'Technology' },
+  { value: 'health', label: 'Health' },
+  { value: 'business', label: 'Business' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+];
+
 const BlogPost = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
@@ -89,6 +98,11 @@ const BlogPost = () => {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const getCategoryLabel = (value) => {
+    const category = CATEGORIES.find(cat => cat.value === value);
+    return category ? category.label : value;
   };
 
   const renderComments = () => {
@@ -200,10 +214,17 @@ const BlogPost = () => {
           <div>
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-primary mb-2">{post.title}</h1>
-              <p className="text-neutral-500">Posted on {formatDate(post.created_at)}</p>
+              <div className="flex items-center mb-4">
+                <p className="text-neutral-500">Posted on {formatDate(post.created_at)}</p>
+                {post.category && (
+                  <span className="ml-3 px-3 py-1 bg-neutral-100 text-sm rounded-full text-neutral-600">
+                    {getCategoryLabel(post.category)}
+                  </span>
+                )}
+              </div>
               
               {isAdmin && (
-                <div className="mt-2">
+                <div className="mt-2 mb-4">
                   <Link 
                     to="/blog-admin" 
                     className="text-accent-blue hover:underline text-sm"
@@ -213,6 +234,23 @@ const BlogPost = () => {
                 </div>
               )}
             </div>
+            
+            {post.image_url && (
+              <div className="mb-6">
+                <div className="w-full h-64 md:h-96 rounded-lg overflow-hidden">
+                  <img 
+                    src={post.image_url} 
+                    alt={post.title}
+                    className="w-full h-full object-cover" 
+                    onError={(e) => {
+                      console.error("Image failed to load:", post.image_url);
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/800x400?text=Image+Not+Found";
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             
             <div className="prose max-w-none mb-8">
               <p className="text-neutral-700 whitespace-pre-wrap">{post.content}</p>

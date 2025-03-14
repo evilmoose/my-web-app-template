@@ -2,8 +2,10 @@
 FastAPI application entry point.
 """ 
 
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi_users import schemas
 from app.core.config import settings
 
@@ -11,6 +13,7 @@ from app.core.config import settings
 from app.api.leads import router as leads_router
 from app.api.users import auth_backend, fastapi_users
 from app.api.blogs import router as blog_router
+from app.api.upload import router as upload_router
 
 
 # Create FastAPI app
@@ -28,6 +31,14 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+# Create uploads directory if it doesn't exist
+UPLOAD_DIR = os.path.join(os.getcwd(), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Mount static files directory for uploads
+# Make sure to set check_dir=False to avoid issues with directory permissions
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR, check_dir=False), name="uploads")
 
 
 # User schemas
@@ -89,6 +100,13 @@ app.include_router(
     blog_router,
     prefix=f"{settings.API_V1_STR}/blogs",
     tags=["blogs"],
+)
+
+# Include upload routes
+app.include_router(
+    upload_router,
+    prefix=f"{settings.API_V1_STR}/upload",
+    tags=["upload"],
 )
 
 # Root endpoint

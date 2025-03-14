@@ -4,6 +4,15 @@ import { getBlogMessages } from '../api/blog';
 import LayoutWithScroll from '../components/LayoutWithScroll';
 import { Link } from 'react-router-dom';
 
+// Sample categories - same as in other components
+const CATEGORIES = [
+  { value: 'culture', label: 'Culture' },
+  { value: 'techno', label: 'Technology' },
+  { value: 'health', label: 'Health' },
+  { value: 'business', label: 'Business' },
+  { value: 'lifestyle', label: 'Lifestyle' },
+];
+
 const Blog = () => {
   const { token, isAdmin } = useAuth();
   const [posts, setPosts] = useState([]);
@@ -37,6 +46,11 @@ const Blog = () => {
     });
   };
 
+  const getCategoryLabel = (value) => {
+    const category = CATEGORIES.find(cat => cat.value === value);
+    return category ? category.label : value;
+  };
+
   return (
     <LayoutWithScroll>
       <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
@@ -65,25 +79,54 @@ const Blog = () => {
           <div className="space-y-8">
             {posts.map((post) => (
               <div key={post.id} className="border-b pb-6 last:border-b-0">
-                <div className="mb-3">
-                  <h2 className="text-2xl font-semibold text-neutral-800">
-                    <Link to={`/blog/${post.id}`} className="hover:text-primary transition-colors">
-                      {post.title}
-                    </Link>
-                  </h2>
-                  <p className="text-sm text-neutral-500">{formatDate(post.created_at)}</p>
-                </div>
-                <div className="prose max-w-none">
-                  <p className="text-neutral-700 whitespace-pre-wrap line-clamp-3">{post.content}</p>
-                  <Link to={`/blog/${post.id}`} className="text-accent-blue hover:underline mt-2 inline-block">
-                    Read more
-                  </Link>
-                </div>
-                
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <Link to={`/blog/${post.id}`} className="text-sm text-accent-blue hover:underline">
-                    View Comments
-                  </Link>
+                <div className="flex flex-col md:flex-row">
+                  {post.image_url && (
+                    <div className="md:w-1/4 mb-4 md:mb-0 md:mr-6">
+                      <Link to={`/blog/${post.id}`}>
+                        <div className="w-full h-48 rounded-lg overflow-hidden">
+                          <img 
+                            src={post.image_url} 
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform hover:scale-105" 
+                            onError={(e) => {
+                              console.error("Image failed to load:", post.image_url);
+                              e.target.onerror = null;
+                              e.target.src = "https://via.placeholder.com/800x400?text=Image+Not+Found";
+                            }}
+                          />
+                        </div>
+                      </Link>
+                    </div>
+                  )}
+                  <div className={`${post.image_url ? 'md:w-3/4' : 'w-full'}`}>
+                    <div className="mb-3">
+                      <h2 className="text-2xl font-semibold text-neutral-800">
+                        <Link to={`/blog/${post.id}`} className="hover:text-primary transition-colors">
+                          {post.title}
+                        </Link>
+                      </h2>
+                      <div className="flex items-center mt-1">
+                        <p className="text-sm text-neutral-500">{formatDate(post.created_at)}</p>
+                        {post.category && (
+                          <span className="ml-3 px-2 py-1 bg-neutral-100 text-xs rounded-full text-neutral-600">
+                            {getCategoryLabel(post.category)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="prose max-w-none">
+                      <p className="text-neutral-700 whitespace-pre-wrap line-clamp-3">{post.content}</p>
+                      <Link to={`/blog/${post.id}`} className="text-accent-blue hover:underline mt-2 inline-block">
+                        Read more
+                      </Link>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <Link to={`/blog/${post.id}`} className="text-sm text-accent-blue hover:underline">
+                        View Comments
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
