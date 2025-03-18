@@ -23,13 +23,13 @@ const Dashboard = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-neutral-100 p-6 rounded-lg">
-            <h3 className="text-lg font-medium text-primary mb-2">My Workflows</h3>
+            <h3 className="text-lg font-medium text-primary mb-2">Project Proposals</h3>
             <p className="text-neutral-600 mb-4">
-              Manage your custom workflow proposals.
+              View and manage your automation project proposals.
             </p>
-            <button className="text-accent-blue hover:underline font-medium">
-              View Workflows
-            </button>
+            <Link to="/projects" className="text-accent-blue hover:underline font-medium">
+              View Proposals
+            </Link>
           </div>
           
           <div className="bg-neutral-100 p-6 rounded-lg">

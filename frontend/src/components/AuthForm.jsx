@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const AuthForm = ({ type = 'login' }) => {
   const isLogin = type === 'login';
-  const { login, signup, error: authError } = useAuth();
+  const { login, register, error: authError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -73,17 +73,26 @@ const AuthForm = ({ type = 'login' }) => {
     
     try {
       if (isLogin) {
-        await login(formData.email, formData.password);
-        // Always redirect to dashboard after successful login
-        navigate('/dashboard', { replace: true });
+        const success = await login(formData.email, formData.password);
+        if (success) {
+          // Navigate to dashboard after successful login
+          navigate('/dashboard', { replace: true });
+        } else {
+          setError('Invalid email or password');
+        }
       } else {
-        await signup(formData.name, formData.email, formData.password);
-        // After signup, also redirect to dashboard
-        navigate('/dashboard', { replace: true });
+        const success = await register(formData.name, formData.email, formData.password);
+        if (success) {
+          // After successful registration, redirect to login
+          navigate('/login', { replace: true });
+        } else {
+          setError('Registration failed. Email may already be in use.');
+        }
       }
     } catch (err) {
       // Error is already handled by the auth context
       console.error('Authentication error:', err.message);
+      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
