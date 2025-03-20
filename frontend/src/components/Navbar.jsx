@@ -115,6 +115,9 @@ const Navbar = () => {
                   <Link to="/dashboard" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
                     Dashboard
                   </Link>
+                  <Link to="/projects" className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
+                    Project Proposals
+                  </Link>
                   <Link to={getBlogLink()} className="px-3 py-2 rounded-md text-sm font-medium text-neutral-700 hover:text-primary">
                     Blog
                   </Link>
@@ -349,6 +352,13 @@ const Navbar = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/projects"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-neutral-700 hover:text-primary hover:bg-neutral-100"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Project Proposals
                 </Link>
                 <Link
                   to={getBlogLink()}

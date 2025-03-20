@@ -15,6 +15,10 @@ import BlogAdmin from './pages/BlogAdmin';
 import BlogPost from './pages/BlogPost';
 import SimpleFooter from './components/SimpleFooter';
 import NormalFooter from './components/NormalFooter';
+import ProjectList from './pages/ProjectList';
+import ProjectDetail from './pages/ProjectDetail';
+import ProjectCreate from './pages/ProjectCreate';
+import ProjectEdit from './pages/ProjectEdit';
 
 // Wrapper component to conditionally render different layouts
 const AppContent = () => {
@@ -23,7 +27,7 @@ const AppContent = () => {
   
   // Pages that should have normal scrolling and full footer
   const normalScrollPages = ['/', '/solutions', '/pricing', '/blog'];
-  const shouldUseNormalScroll = normalScrollPages.includes(path) || path.startsWith('/blog/');
+  const shouldUseNormalScroll = normalScrollPages.includes(path);
   
   return (
     <div className={shouldUseNormalScroll ? "" : "flex flex-col h-screen overflow-hidden"}>
@@ -67,6 +71,26 @@ const AppContent = () => {
               </AdminRoute>
             } 
           />
+          <Route path="/projects" element={
+            <ProtectedRoute>
+              <ProjectList />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects/new" element={
+            <ProtectedRoute>
+              <ProjectCreate />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects/:projectId/*" element={
+            <ProtectedRoute>
+              <ProjectDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/projects/:projectId/edit" element={
+            <ProtectedRoute>
+              <ProjectEdit />
+            </ProtectedRoute>
+          } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
