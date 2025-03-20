@@ -103,22 +103,79 @@ class AIService:
         
         # Create a prompt for the AI
         prompt = f"""
-        Create a detailed project proposal based on the following requirements:
-        
-        Project Goals: {combined_data.get('project_goals', 'Custom automation solution')}
-        Technical Requirements: {combined_data.get('technical_requirements', 'Web-based system with integrations')}
-        Timeline: {combined_data.get('timeline', '2-3 months')}
-        Budget: {combined_data.get('budget_constraints', '$10,000 - $15,000')}
-        Tools and Integrations: {combined_data.get('tools_and_integrations', 'API integrations')}
-        
-        Format the proposal in Markdown with the following sections:
-        1. Executive Summary
-        2. Project Scope and Goals
-        3. Technical Approach (including recommended tools, integration strategy, and data flow architecture)
-        4. Implementation Plan (including timeline and milestones)
-        5. Budget Estimate
-        
-        Make it professional and detailed.
+        Create a detailed project proposal in Markdown format following this EXACT structure:
+
+        # Project Proposal: {combined_data.get('project_goals', 'Custom Automation Solution')}
+
+        ## Executive Summary
+        [Write a concise 2-3 sentence summary of the project]
+
+        ## Project Scope and Goals
+        - Primary Goal: {combined_data.get('project_goals', 'Custom automation solution')}
+        - Key Objectives:
+          1. [First key objective]
+          2. [Second key objective]
+          3. [Third key objective]
+
+        ## Technical Approach
+        ### Recommended Technologies
+        - [List main technologies and tools]
+        - [Include specific versions if relevant]
+
+        ### Integration Strategy
+        - [Describe how systems will be integrated]
+        - [Include API and data flow details]
+
+        ### Data Flow Architecture
+        1. [First step in data flow]
+        2. [Second step in data flow]
+        3. [Third step in data flow]
+
+        ## Implementation Plan
+        ### Timeline Overview
+        Total Duration: {combined_data.get('timeline', '2-3 months')}
+
+        ### Milestones
+        1. **Phase 1: Requirements & Planning** (Duration: X weeks)
+           - [Key activities]
+           - [Deliverables]
+
+        2. **Phase 2: Development** (Duration: X weeks)
+           - [Key activities]
+           - [Deliverables]
+
+        3. **Phase 3: Testing & Deployment** (Duration: X weeks)
+           - [Key activities]
+           - [Deliverables]
+
+        ## Budget Breakdown
+        Total Estimated Cost: {combined_data.get('budget_constraints', '$10,000 - $15,000')}
+
+        ### Cost Components
+        1. Development & Implementation
+           - [Cost range]
+           - [What's included]
+
+        2. Infrastructure & Tools
+           - [Cost range]
+           - [What's included]
+
+        3. Training & Documentation
+           - [Cost range]
+           - [What's included]
+
+        **Note:** This estimate is based on our understanding of the project scope. The final cost may vary depending on the complexity of requirements and any additional features requested.
+
+        ### Payment Schedule
+        - 30% upfront payment upon contract signing
+        - 40% upon completion of development phase
+        - 30% upon project completion and delivery
+
+        **Contingency:** A 10% contingency is built into the estimated cost to cover unforeseen issues and minor scope changes.
+
+        ---
+
+        We are excited about the opportunity to work with you on this project and deliver a valuable automation solution that meets your needs.
         """
         
         # Generate the proposal using the AI

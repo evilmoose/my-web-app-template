@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import ProjectOnboarding from '../components/ProjectOnboarding';
 import ProjectProposal from '../components/ProjectProposal';
+import LayoutWithScroll from '../components/LayoutWithScroll';
 
 // Mock data for development when API is not available
 const MOCK_PROJECT = {
@@ -22,6 +23,7 @@ const ProjectDetail = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [summaryData, setSummaryData] = useState(null);
   const { getAuthHeaders } = useAuth();
   const isMounted = useRef(true);
   const isRequestInProgress = useRef(false);
@@ -95,35 +97,50 @@ const ProjectDetail = () => {
   }, []);
 
   useEffect(() => {
+    if (!projectId) return;
+    
     // Reset state when projectId changes
     setProject(null);
     setError(null);
     
     // Fetch project data
     fetchProject();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
-  // If auth headers change, we need to refetch
-  useEffect(() => {
-    // Only refetch if we're already mounted and not the initial render
-    if (isMounted.current && !loading && projectId) {
-      fetchProject();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getAuthHeaders]);
+  const handleSummaryData = React.useCallback((data) => {
+    setSummaryData(data);
+  }, []);
+
+  const renderProjectSummary = () => {
+    if (!summaryData) return null;
+
+    const industry = summaryData.industryType || 'your industry';
+    const automationGoal = summaryData.automationGoal || 'automation needs';
+    const painPoints = summaryData.painPoints || 'identified challenges';
+    
+    const projectSummary = `This automation project in the ${industry} industry aims to ${automationGoal.toLowerCase()}. The project will address ${painPoints.toLowerCase()}.`;
+
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-xl font-semibold mb-2">Project Summary</h2>
+        <p className="text-gray-700">{projectSummary}</p>
+      </div>
+    );
+  };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
+      <LayoutWithScroll>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
+      </LayoutWithScroll>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
+      <LayoutWithScroll>
         <div className="bg-red-50 p-6 rounded-lg border border-red-200 text-red-700">
           <h3 className="font-semibold mb-2">Error</h3>
           <p className="mb-4">{error}</p>
@@ -142,24 +159,26 @@ const ProjectDetail = () => {
             </Link>
           </div>
         </div>
-      </div>
+      </LayoutWithScroll>
     );
   }
 
   if (!project) {
     return (
-      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-yellow-700">
-        <h3 className="font-semibold mb-2">Project Not Found</h3>
-        <p>The requested project could not be found.</p>
-        <Link to="/projects" className="text-blue-500 hover:underline mt-2 inline-block">
-          Back to Projects
-        </Link>
-      </div>
+      <LayoutWithScroll>
+        <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 text-yellow-700">
+          <h3 className="font-semibold mb-2">Project Not Found</h3>
+          <p>The requested project could not be found.</p>
+          <Link to="/projects" className="text-blue-500 hover:underline mt-2 inline-block">
+            Back to Projects
+          </Link>
+        </div>
+      </LayoutWithScroll>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <LayoutWithScroll>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">{project.name}</h1>
         <div className="flex space-x-2">
@@ -185,11 +204,21 @@ const ProjectDetail = () => {
         </div>
       )}
 
+      {renderProjectSummary()}
+
       <Routes>
-        <Route path="/" element={<ProjectOnboarding projectId={projectId} />} />
+        <Route 
+          path="/" 
+          element={
+            <ProjectOnboarding 
+              projectId={projectId} 
+              onSummaryData={handleSummaryData}
+            />
+          } 
+        />
         <Route path="/proposal" element={<ProjectProposal projectId={projectId} />} />
       </Routes>
-    </div>
+    </LayoutWithScroll>
   );
 };
 

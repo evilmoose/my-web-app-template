@@ -27,7 +27,7 @@ const AppContent = () => {
   
   // Pages that should have normal scrolling and full footer
   const normalScrollPages = ['/', '/solutions', '/pricing', '/blog'];
-  const shouldUseNormalScroll = normalScrollPages.includes(path) || path.startsWith('/blog/');
+  const shouldUseNormalScroll = normalScrollPages.includes(path);
   
   return (
     <div className={shouldUseNormalScroll ? "" : "flex flex-col h-screen overflow-hidden"}>

@@ -2,6 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import { Link } from 'react-router-dom';
 
 // Mock data for development when API is not available
@@ -23,10 +27,78 @@ We recommend implementing a workflow automation using the following technologies
 
 ## Cost Estimate
 $5,000 - $7,500
+
+\`\`\`javascript
+// Sample code for automation workflow
+const automateProcess = async (data) => {
+  // Process incoming data
+  const processedData = await processData(data);
+  
+  // Store in database
+  await saveToDatabase(processedData);
+  
+  // Trigger notification
+  sendNotification({
+    type: 'process_complete',
+    data: processedData
+  });
+};
+\`\`\`
 `;
 
 // Set this to true to use mock data instead of API calls
 const USE_MOCK_DATA = false;
+
+// Custom components for ReactMarkdown
+const components = {
+  // Apply custom styling to headings
+  h1: ({ children }) => <h1 className="text-3xl font-bold text-blue-800 mt-6 mb-4 pb-2 border-b-2 border-gray-200">{children}</h1>,
+  h2: ({ children }) => <h2 className="text-2xl font-semibold text-blue-700 mt-5 mb-3">{children}</h2>,
+  h3: ({ children }) => <h3 className="text-xl font-semibold text-blue-600 mt-4 mb-2">{children}</h3>,
+  
+  // Style lists
+  ul: ({ children }) => <ul className="list-disc pl-6 my-4">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-6 my-4">{children}</ol>,
+  li: ({ children }) => <li className="mb-1">{children}</li>,
+  
+  // Style paragraphs and other elements
+  p: ({ children }) => <p className="my-3 text-gray-700 leading-relaxed">{children}</p>,
+  a: ({ children, href }) => <a href={href} className="text-blue-600 underline hover:text-blue-800">{children}</a>,
+  blockquote: ({ children }) => <blockquote className="border-l-4 border-blue-200 pl-4 italic text-gray-600 my-4">{children}</blockquote>,
+  
+  // Format code with syntax highlighting
+  code: ({ inline, className, children }) => {
+    const match = /language-(\w+)/.exec(className || '');
+    return !inline && match ? (
+      <div className="my-4 rounded-lg overflow-hidden shadow-md">
+        <SyntaxHighlighter
+          style={tomorrow}
+          language={match[1]}
+          PreTag="div"
+          className="rounded-lg"
+          showLineNumbers={true}
+          wrapLines={true}
+        >
+          {String(children).replace(/\n$/, '')}
+        </SyntaxHighlighter>
+      </div>
+    ) : (
+      <code className="bg-gray-100 text-pink-600 px-1 py-0.5 rounded font-mono text-sm">{children}</code>
+    );
+  },
+  
+  // Style tables
+  table: ({ children }) => (
+    <div className="overflow-x-auto my-4">
+      <table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">{children}</table>
+    </div>
+  ),
+  thead: ({ children }) => <thead className="bg-gray-50">{children}</thead>,
+  th: ({ children }) => <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{children}</th>,
+  tbody: ({ children }) => <tbody className="bg-white divide-y divide-gray-200">{children}</tbody>,
+  tr: ({ children }) => <tr className="hover:bg-gray-50">{children}</tr>,
+  td: ({ children }) => <td className="px-4 py-3 text-sm text-gray-700">{children}</td>
+};
 
 const ProjectProposal = ({ projectId }) => {
   const [proposal, setProposal] = useState(null);
@@ -46,15 +118,6 @@ const ProjectProposal = ({ projectId }) => {
       return;
     }
 
-    // If using mock data, return immediately with mock proposal
-    if (USE_MOCK_DATA) {
-      console.log('Using mock proposal data');
-      setProposal(MOCK_PROPOSAL);
-      setEditedProposal(MOCK_PROPOSAL);
-      setLoading(false);
-      return;
-    }
-
     try {
       isRequestInProgress.current = true;
       setLoading(true);
@@ -66,14 +129,15 @@ const ProjectProposal = ({ projectId }) => {
         { headers: getAuthHeaders() }
       );
       
+      console.log('Response data:', response.data);
+      
       if (isMounted.current) {
-        if (response.status === 200 && response.data && response.data.length > 0) {
-          // Get the latest proposal (first in the list since they're ordered by version desc)
+        if (response.data && response.data.length > 0) {
+          console.log('Setting proposal content:', response.data[0].content);
           setProposal(response.data[0].content);
           setEditedProposal(response.data[0].content);
         } else {
-          // No proposals found, but this is not an error
-          console.log('No proposals found in response data. Setting proposal to null.');
+          console.log('No proposals found in response data');
           setProposal(null);
         }
       }
@@ -81,19 +145,58 @@ const ProjectProposal = ({ projectId }) => {
       console.error('Error fetching proposal:', err);
       
       if (isMounted.current) {
-        // Handle 404 as no proposals yet, not an error
         if (err.response && err.response.status === 404) {
-          console.log(`No proposals found for project ${projectId} (404 response).`);
+          console.log('No proposals found (404)');
           setProposal(null);
-        } 
-        // Handle network errors or server unavailable
-        else if (!err.response) {
-          console.log('Network error or API unavailable');
+        } else if (!err.response) {
+          console.error('Network error:', err);
           setError('Unable to connect to the server. Please check your internet connection and try again.');
-        }
-        // Handle other API errors
-        else {
+        } else {
+          console.error('API error:', err.response);
           setError(`Failed to load the proposal. Server returned: ${err.response.status} ${err.response.statusText}`);
+        }
+      }
+    } finally {
+      if (isMounted.current) {
+        setLoading(false);
+      }
+      isRequestInProgress.current = false;
+    }
+  };
+
+  const generateProposal = async () => {
+    if (isRequestInProgress.current) {
+      console.log('Request already in progress, skipping duplicate request');
+      return;
+    }
+
+    try {
+      isRequestInProgress.current = true;
+      setLoading(true);
+      setError(null);
+      
+      console.log(`Generating proposal for project ID: ${projectId}...`);
+      const response = await axios.post(
+        `/api/v1/projects/${projectId}/proposals`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      
+      console.log('Generated proposal response:', response.data);
+      
+      if (isMounted.current && response.data) {
+        console.log('Setting generated proposal:', response.data.content);
+        setProposal(response.data.content);
+        setEditedProposal(response.data.content);
+      }
+    } catch (err) {
+      console.error('Error generating proposal:', err);
+      
+      if (isMounted.current) {
+        if (!err.response) {
+          setError('Unable to connect to the server. Please check your internet connection and try again.');
+        } else {
+          setError(`Failed to generate proposal. Server returned: ${err.response.status} ${err.response.statusText}`);
         }
       }
     } finally {
@@ -205,6 +308,12 @@ const ProjectProposal = ({ projectId }) => {
           >
             Complete Onboarding
           </Link>
+          <button
+            onClick={generateProposal}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          >
+            Generate Proposal
+          </button>
         </div>
       </div>
     );
@@ -212,8 +321,8 @@ const ProjectProposal = ({ projectId }) => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Your Automation Proposal</h2>
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h2 className="text-2xl font-bold text-blue-900">Your Automation Proposal</h2>
         {isAdmin && !isEditing && (
           <button
             onClick={handleEditClick}
@@ -248,21 +357,30 @@ const ProjectProposal = ({ projectId }) => {
           </div>
         </div>
       ) : (
-        <div className="prose max-w-none">
-          <ReactMarkdown>{proposal}</ReactMarkdown>
+        <div className="prose prose-blue max-w-none">
+          <ReactMarkdown
+            components={components}
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw]}
+          >
+            {proposal || ''}
+          </ReactMarkdown>
         </div>
       )}
       
       {!isEditing && (
-        <div className="mt-8 flex space-x-4">
+        <div className="mt-8 border-t pt-6 flex flex-wrap space-x-4">
           <button
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center mb-2"
             onClick={() => window.print()}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
             Print / Save as PDF
           </button>
           <button
-            className="px-4 py-2 border border-blue-500 text-blue-500 rounded hover:bg-blue-50"
+            className="px-4 py-2 border border-blue-500 text-blue-500 rounded hover:bg-blue-50 flex items-center mb-2"
             onClick={() => {
               const blob = new Blob([proposal], { type: 'text/markdown' });
               const url = URL.createObjectURL(blob);
@@ -274,7 +392,22 @@ const ProjectProposal = ({ projectId }) => {
               document.body.removeChild(a);
             }}
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
             Download as Markdown
+          </button>
+          <button
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50 flex items-center mb-2"
+            onClick={() => {
+              navigator.clipboard.writeText(proposal);
+              alert('Proposal copied to clipboard!');
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            Copy to Clipboard
           </button>
         </div>
       )}

@@ -18,7 +18,7 @@ const ProjectEdit = () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `/api/v1/projects/${projectId}`,
+          `/api/v1/projects/${projectId}/`,
           { headers: getAuthHeaders() }
         );
         
@@ -50,9 +50,10 @@ const ProjectEdit = () => {
     setError(null);
     
     try {
+      const projectData = { name, description };
       const response = await axios.put(
-        `/api/v1/projects/${projectId}`,
-        { name, description },
+        `/api/v1/projects/${projectId}/`,
+        projectData,
         { headers: getAuthHeaders() }
       );
       

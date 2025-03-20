@@ -11,11 +11,11 @@ from app.schemas.project import (
     OnboardingForm, OnboardingFormCreate,
     Proposal, ProposalCreate
 )
-from app.db.project import project
+from app.db.project import ProjectCRUD
 from app.services.ai_service import AIService
 from app.services.file_service import FileService
 
-router = APIRouter(prefix="/api/projects", tags=["projects"])
+router = APIRouter()
 ai_service = AIService()
 file_service = FileService()
 
@@ -26,7 +26,7 @@ async def create_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    return project.create_project(db=db, project=project_data, user_id=current_user.id)
+    return await ProjectCRUD.create(db=db, user_id=current_user.id, project_in=project_data)
 
 @router.get("/", response_model=List[Project])
 async def read_projects(
@@ -35,7 +35,7 @@ async def read_projects(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    return project.get_projects_by_user(db=db, user_id=current_user.id, skip=skip, limit=limit)
+    return await ProjectCRUD.get_multi(db=db, user_id=current_user.id, skip=skip, limit=limit)
 
 @router.get("/{project_id}", response_model=Project)
 async def read_project(
@@ -43,7 +43,7 @@ async def read_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
@@ -57,12 +57,12 @@ async def update_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to update this project")
-    return project.update_project(db=db, project_id=project_id, project_update=project_update)
+    return await ProjectCRUD.update(db=db, project_id=project_id, project_in=project_update)
 
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project(
@@ -70,13 +70,13 @@ async def delete_project(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to delete this project")
     
-    success = project.delete_project(db=db, project_id=project_id)
+    success = await ProjectCRUD.delete(db=db, project_id=project_id)
     if not success:
         raise HTTPException(status_code=500, detail="Failed to delete project")
     return None
@@ -85,13 +85,13 @@ async def delete_project(
 @router.post("/{project_id}/onboarding", response_model=OnboardingForm)
 async def create_onboarding_form(
     project_id: int,
-    form_data: Dict[str, Any] = Form(...),
+    form_data: str = Form(...),
     file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
     # Check if project exists and belongs to user
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
@@ -114,7 +114,7 @@ async def create_onboarding_form(
         form_data=parsed_form_data,
         file_path=file_path
     )
-    db_form = project.create_onboarding_form(db=db, form=form_create)
+    db_form = await ProjectCRUD.create_onboarding_form(db=db, form=form_create)
     
     # Process file if provided
     if file_path and file_path.endswith('.pdf'):
@@ -122,7 +122,7 @@ async def create_onboarding_form(
         extracted_data = ai_service.extract_data_from_pdf(file_path)
         
         # Update form with extracted data
-        db_form = project.update_onboarding_form(
+        db_form = await ProjectCRUD.update_onboarding_form(
             db=db, 
             form_id=db_form.id, 
             form_data={
@@ -147,13 +147,13 @@ async def read_onboarding_forms(
     current_user: User = Depends(current_active_user)
 ):
     # Check if project exists and belongs to user
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this project")
     
-    return project.get_onboarding_forms_by_project(db=db, project_id=project_id)
+    return await ProjectCRUD.get_onboarding_forms_by_project(db=db, project_id=project_id)
 
 # Proposal endpoints
 @router.post("/{project_id}/proposals", response_model=Proposal)
@@ -163,14 +163,14 @@ async def create_proposal(
     current_user: User = Depends(current_active_user)
 ):
     # Check if project exists and belongs to user
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this project")
     
     # Get the latest onboarding form
-    forms = project.get_onboarding_forms_by_project(db=db, project_id=project_id)
+    forms = await ProjectCRUD.get_onboarding_forms_by_project(db=db, project_id=project_id)
     if not forms:
         raise HTTPException(status_code=400, detail="No onboarding form found for this project")
     
@@ -189,7 +189,7 @@ async def create_proposal(
         content=proposal_content
     )
     
-    return project.create_proposal(db=db, proposal=proposal_create)
+    return await ProjectCRUD.create_proposal(db=db, proposal=proposal_create)
 
 @router.get("/{project_id}/proposals", response_model=List[Proposal])
 async def read_proposals(
@@ -198,13 +198,13 @@ async def read_proposals(
     current_user: User = Depends(current_active_user)
 ):
     # Check if project exists and belongs to user
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this project")
     
-    return project.get_proposals_by_project(db=db, project_id=project_id)
+    return await ProjectCRUD.get_proposals_by_project(db=db, project_id=project_id)
 
 @router.put("/{project_id}/proposals/{proposal_id}", response_model=Proposal)
 async def update_proposal(
@@ -215,17 +215,17 @@ async def update_proposal(
     current_user: User = Depends(current_active_user)
 ):
     # Check if project exists and belongs to user
-    db_project = project.get_project(db=db, project_id=project_id)
+    db_project = await ProjectCRUD.get(db=db, project_id=project_id)
     if db_project is None:
         raise HTTPException(status_code=404, detail="Project not found")
     if db_project.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this project")
     
     # Check if proposal exists and belongs to project
-    db_proposal = project.get_proposal(db=db, proposal_id=proposal_id)
+    db_proposal = await ProjectCRUD.get_proposal(db=db, proposal_id=proposal_id)
     if db_proposal is None:
         raise HTTPException(status_code=404, detail="Proposal not found")
     if db_proposal.project_id != project_id:
         raise HTTPException(status_code=400, detail="Proposal does not belong to this project")
     
-    return project.update_proposal(db=db, proposal_id=proposal_id, content=content)
+    return await ProjectCRUD.update_proposal(db=db, proposal_id=proposal_id, content=content)

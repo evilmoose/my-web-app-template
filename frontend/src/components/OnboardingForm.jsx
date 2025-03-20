@@ -4,6 +4,9 @@ import Modal from 'react-modal';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
+// Configure Modal for accessibility
+Modal.setAppElement('#root');
+
 const OnboardingForm = ({ projectId, isOpen, onClose, onSuccess }) => {
   const { register, handleSubmit, control, formState: { errors } } = useForm();
   const [currentStep, setCurrentStep] = useState(1);
@@ -12,23 +15,27 @@ const OnboardingForm = ({ projectId, isOpen, onClose, onSuccess }) => {
   const [submitError, setSubmitError] = useState(null);
   const { getAuthHeaders } = useAuth();
   
-  // Make sure to bind modal to your app element for accessibility
+  // Reset form state when modal opens/closes
   useEffect(() => {
-    // Try to set the app element safely
-    try {
-      Modal.setAppElement('#root');
-    } catch (error) {
-      console.warn('Could not set app element for Modal:', error);
+    if (!isOpen) {
+      setCurrentStep(1);
+      setSubmitError(null);
     }
-  }, []);
+  }, [isOpen]);
   
   const totalSteps = 5;
   
-  const nextStep = () => {
+  const nextStep = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setCurrentStep(prev => Math.min(prev + 1, totalSteps));
   };
   
-  const prevStep = () => {
+  const prevStep = (e) => {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
   
@@ -54,36 +61,9 @@ const OnboardingForm = ({ projectId, isOpen, onClose, onSuccess }) => {
         formData.append('file', file);
       }
       
-      let targetProjectId = projectId;
-      
-      // If this is a new project, create it first
-      if (projectId === 'new') {
-        try {
-          const projectResponse = await axios.post(
-            '/api/v1/projects',
-            { 
-              name: data.fullName ? `${data.fullName}'s Project` : 'New Automation Project',
-              description: data.automationGoal || 'Created via onboarding form'
-            },
-            { headers: getAuthHeaders() }
-          );
-          
-          if (projectResponse.status === 201) {
-            targetProjectId = projectResponse.data.id;
-          } else {
-            throw new Error('Failed to create new project');
-          }
-        } catch (projectError) {
-          console.error('Error creating project:', projectError);
-          setSubmitError('Failed to create new project. Please try again.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
       // Send to backend
       const response = await axios.post(
-        `/api/v1/projects/${targetProjectId}/onboarding`,
+        `/api/v1/projects/${projectId}/onboarding`,
         formData,
         {
           headers: {
@@ -471,6 +451,8 @@ const OnboardingForm = ({ projectId, isOpen, onClose, onSuccess }) => {
       onRequestClose={onClose}
       className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-lg"
       overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
+      contentLabel="Project Onboarding Form"
+      ariaHideApp={false}
     >
       <div className="space-y-6">
         <div className="flex justify-between items-center">
@@ -500,7 +482,14 @@ const OnboardingForm = ({ projectId, isOpen, onClose, onSuccess }) => {
           ))}
         </div>
         
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={(e) => {
+          if (currentStep < totalSteps) {
+            e.preventDefault();
+            nextStep();
+          } else {
+            handleSubmit(onSubmit)(e);
+          }
+        }}>
           {renderStep()}
           
           <div className="flex justify-between mt-6">

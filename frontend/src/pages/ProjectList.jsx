@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import OnboardingForm from '../components/OnboardingForm';
+import ProjectCreateModal from '../components/ProjectCreateModal';
 
 // Mock data for development when API is not available
 const MOCK_PROJECTS = [
@@ -29,7 +30,9 @@ const ProjectList = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
   const { getAuthHeaders } = useAuth();
   const navigate = useNavigate();
   const isMounted = useRef(true);
@@ -57,7 +60,7 @@ const ProjectList = () => {
       
       console.log('Fetching projects...');
       const response = await axios.get(
-        '/api/v1/projects',
+        '/api/v1/projects/',
         { headers: getAuthHeaders() }
       );
       
@@ -115,18 +118,35 @@ const ProjectList = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getAuthHeaders]);
 
-  const openModal = () => {
-    setIsModalOpen(true);
+  const openCreateModal = () => {
+    setIsCreateModalOpen(true);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+  };
+
+  const openOnboardingModal = (project) => {
+    setSelectedProject(project);
+    setIsOnboardingModalOpen(true);
+  };
+
+  const closeOnboardingModal = () => {
+    setIsOnboardingModalOpen(false);
+    setSelectedProject(null);
+  };
+
+  const handleProjectCreated = (project) => {
+    // Refresh the project list
+    fetchProjects();
+    // Open the onboarding modal for the new project
+    openOnboardingModal(project);
   };
 
   const handleOnboardingSuccess = (data) => {
     // Refresh the project list after creating a new project
     fetchProjects();
-    closeModal();
+    closeOnboardingModal();
   };
 
   if (loading) {
@@ -161,7 +181,7 @@ const ProjectList = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">My Project Proposals</h1>
         <button
-          onClick={openModal}
+          onClick={openCreateModal}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Create New Project
@@ -178,7 +198,7 @@ const ProjectList = () => {
             Our project onboarding process will guide you through defining your automation needs and requirements.
           </p>
           <button
-            onClick={openModal}
+            onClick={openCreateModal}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Create Your First Project
@@ -209,13 +229,23 @@ const ProjectList = () => {
         </div>
       )}
 
-      {/* Onboarding Form Modal */}
-      <OnboardingForm
-        projectId="new" // Special value to indicate creating a new project
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onSuccess={handleOnboardingSuccess}
+      {/* Project Creation Modal */}
+      <ProjectCreateModal
+        isOpen={isCreateModalOpen}
+        onClose={closeCreateModal}
+        onSuccess={handleProjectCreated}
+        projectCount={projects.length}
       />
+
+      {/* Onboarding Form Modal */}
+      {selectedProject && (
+        <OnboardingForm
+          projectId={selectedProject.id}
+          isOpen={isOnboardingModalOpen}
+          onClose={closeOnboardingModal}
+          onSuccess={handleOnboardingSuccess}
+        />
+      )}
     </div>
   );
 };

@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProjectCreate = () => {
+const ProjectCreateModal = ({ isOpen, onClose, onSuccess, projectCount }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
   const { getAuthHeaders } = useAuth();
+
+  // Set default project name when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setName(`Project ${projectCount + 1}`);
+    }
+  }, [isOpen, projectCount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +35,8 @@ const ProjectCreate = () => {
       );
       
       if (response.status === 201) {
-        navigate(`/projects/${response.data.id}`);
+        onSuccess(response.data);
+        onClose();
       }
     } catch (err) {
       console.error('Error creating project:', err);
@@ -40,17 +46,19 @@ const ProjectCreate = () => {
     }
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Create New Project</h1>
-      
-      {error && (
-        <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700 mb-6">
-          <p>{error}</p>
-        </div>
-      )}
-      
-      <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-2xl font-bold mb-4">Create New Project</h2>
+        
+        {error && (
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-red-700 mb-4">
+            <p>{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -79,11 +87,11 @@ const ProjectCreate = () => {
             />
           </div>
           
-          <div className="flex justify-end">
+          <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => navigate('/projects')}
-              className="px-4 py-2 border border-gray-300 rounded mr-2"
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
             >
               Cancel
             </button>
@@ -101,4 +109,4 @@ const ProjectCreate = () => {
   );
 };
 
-export default ProjectCreate; 
+export default ProjectCreateModal; 
